@@ -39,6 +39,35 @@ function updateState(state) {
 	}
 }
 
+function generateEvents(state) {
+  const now = Date.now();
+  const events = [];
+
+  // Heart rate event every tick
+  events.push({
+    type: 'heart_rate',
+    timestamp: now,
+    value: state.heartRate,
+  });
+
+  // Steps event every 3 seconds
+  if (now - state.lastStepEmit > 3000) {
+    events.push({
+      type: 'steps',
+      timestamp: now,
+      total: state.steps,
+    });
+    state.lastStepEmit = now;
+  }
+
+  return events;
+}
+
+function emitEvents(events) {
+  events.forEach((e) => {
+    console.log(e);
+  });
+}
 
 
 
