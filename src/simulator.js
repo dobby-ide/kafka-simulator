@@ -15,14 +15,29 @@ function maybeChangeActivity(state) {
   console.log('Checking for activity change...');
   if (Math.random() < 0.05) {
     const activities = ['idle', 'walking', 'running', 'cycling'];
-    state.activity = activities[randomBetween(0, activities.length - 1)];
+    const newActivity = activities[randomBetween(0, activities.length - 1)];
+
+    if (newActivity !== state.activity) {
+      console.log(`Activity changed from ${state.activity} to ${newActivity}`);
+      state.activity = newActivity;
+      return {
+        type: 'activity_change',
+        timestamp: Date.now(),
+        value: newActivity,
+      };
+    }
   }
+  return null;
 }
 
 function updateState(state, tick) {
+  const events = [];
   console.log(tick);
   if (tick % 3 === 0) {
-    maybeChangeActivity(state);
+    const activityEvent = maybeChangeActivity(state);
+    if (activityEvent) {
+      events.push(activityEvent);
+    }
   }
 
   //updates heart rate and steps based on activity
@@ -42,7 +57,7 @@ function updateState(state, tick) {
   }
   if (state.activity === 'walking' || state.activity === 'running') {
     const now = Date.now();
-    if (now - state.lastStepEmit > 1000) {
+    if (now - state.lastStepUpdate > 1000) {
       state.steps +=
         state.activity === 'walking'
           ? randomBetween(1, 3)
@@ -50,6 +65,7 @@ function updateState(state, tick) {
       state.lastStepUpdate = now;
     }
   }
+  return events;
 }
 
 function generateEvents(state, tick) {
@@ -64,7 +80,7 @@ function generateEvents(state, tick) {
   });
 
   // Steps event every 3 ticks or if steps have been updated
-  if (tick % 3 === 0 || now - state.lastStepUpdate < 1000) {
+  if (tick % 3 === 0) {
     events.push({
       type: 'steps',
       timestamp: now,
@@ -85,7 +101,7 @@ function emitEvents(events) {
 // Simulate the state of the system
 setInterval(() => {
   tick++;
-  updateState(state, tick);
-  const events = generateEvents(state, tick);
-  emitEvents(events);
+  const stateEvents = updateState(state, tick);
+  const generatedEvents = generateEvents(state, tick);
+  emitEvents([...stateEvents, ...generatedEvents]);
 }, 1000);
