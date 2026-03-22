@@ -1,45 +1,58 @@
 const state = {
-  activity: "idle",
+  activity: 'idle',
   heartRate: 75,
   steps: 0,
   lastStepEmit: Date.now(),
+  lastStepUpdate: Date.now(),
 };
+let tick = 0;
 
-function randomBetween(min, max){
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+function randomBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function updateState(state) {
-	if(Math.random() < 0.05) {
-		const activities = ["idle", "walking", "running", "cycling"];
-		state.activity = activities[randomBetween(0, activities.length - 1)];
-	}
-
-	//updates heart rate and steps based on activity
-	switch(state.activity) {
-		case "idle":
-			state.heartRate = randomBetween(60, 80);
-			break;
-		case "walking":
-			state.heartRate = randomBetween(80, 100);
-			break;
-		case "running":
-			state.heartRate = randomBetween(100, 140);
-			break;
-		case "cycling":
-			state.heartRate = randomBetween(90, 120);
-			break;
-	}
-	if(state.activity === "walking" || state.activity === "running") {
-		const now = Date.now();
-		if(now - state.lastStepEmit > 1000) {
-			state.steps += state.activity === "walking" ? randomBetween(1, 3) : randomBetween(3, 6);
-			state.lastStepEmit = now;
-		}
-	}
+function maybeChangeActivity(state) {
+  console.log('Checking for activity change...');
+  if (Math.random() < 0.05) {
+    const activities = ['idle', 'walking', 'running', 'cycling'];
+    state.activity = activities[randomBetween(0, activities.length - 1)];
+  }
 }
 
-function generateEvents(state) {
+function updateState(state, tick) {
+  console.log(tick);
+  if (tick % 3 === 0) {
+    maybeChangeActivity(state);
+  }
+
+  //updates heart rate and steps based on activity
+  switch (state.activity) {
+    case 'idle':
+      state.heartRate = randomBetween(60, 80);
+      break;
+    case 'walking':
+      state.heartRate = randomBetween(80, 100);
+      break;
+    case 'running':
+      state.heartRate = randomBetween(100, 140);
+      break;
+    case 'cycling':
+      state.heartRate = randomBetween(90, 120);
+      break;
+  }
+  if (state.activity === 'walking' || state.activity === 'running') {
+    const now = Date.now();
+    if (now - state.lastStepEmit > 1000) {
+      state.steps +=
+        state.activity === 'walking'
+          ? randomBetween(1, 3)
+          : randomBetween(3, 6);
+      state.lastStepUpdate = now;
+    }
+  }
+}
+
+function generateEvents(state, tick) {
   const now = Date.now();
   const events = [];
 
@@ -50,8 +63,8 @@ function generateEvents(state) {
     value: state.heartRate,
   });
 
-  // Steps event every 3 seconds
-  if (now - state.lastStepEmit > 3000) {
+  // Steps event every 3 ticks or if steps have been updated
+  if (tick % 3 === 0 || now - state.lastStepUpdate < 1000) {
     events.push({
       type: 'steps',
       timestamp: now,
@@ -69,13 +82,10 @@ function emitEvents(events) {
   });
 }
 
-
-
-
-
 // Simulate the state of the system
 setInterval(() => {
-  updateState(state);
-  const events = generateEvents(state);
+  tick++;
+  updateState(state, tick);
+  const events = generateEvents(state, tick);
   emitEvents(events);
 }, 1000);
