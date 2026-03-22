@@ -12,6 +12,6 @@ Shows a basic setup, steps and heart rate is changing based on some random facto
 <img src="assets/simulator_logs_001.png" alt="log001" width="300"/>
 
 22.03.2026
-[commit 1df17ee909a2336cdcbf23ed815bf606c1d9f0be](https://github.com/dobby-ide/kafka-simulator/commit/1df17ee909a2336cdcbf23ed815bf606c1d9f0be)
+[commit 8367092727856bcc002cffa4e639cd3b22a3f442](https://github.com/dobby-ide/kafka-simulator/commit/8367092727856bcc002cffa4e639cd3b22a3f442)
 
 tick variable is initialized to introduce a discrete simulation clock. An activity change log is introduced.
