@@ -1,10 +1,26 @@
-const state = {
-  activity: 'idle',
-  heartRate: 75,
-  steps: 0,
-  lastStepEmit: Date.now(),
-  lastStepUpdate: Date.now(),
-};
+function createDevice(deviceId) {
+  return {
+    deviceId,
+    batteryLevel: 100,
+    latitude: 37.7749,
+    longitude: -122.4194,
+    caloriesBurned: 0,
+    isSleeping: false,
+    activity: 'idle',
+    heartRate: 75,
+    steps: 0,
+    lastStepEmit: Date.now(),
+    lastStepUpdate: Date.now(),
+  };
+}
+
+const devices = [
+  createDevice('watch-001'),
+  createDevice('watch-002'),
+  createDevice('watch-003'),
+];
+
+console.log(devices);
 let tick = 0;
 
 function randomBetween(min, max) {
@@ -30,45 +46,45 @@ function maybeChangeActivity(state) {
   return null;
 }
 
-function updateState(state, tick) {
+function updateState(device, tick) {
   const events = [];
   console.log(tick);
   if (tick % 3 === 0) {
-    const activityEvent = maybeChangeActivity(state);
+    const activityEvent = maybeChangeActivity(device);
     if (activityEvent) {
       events.push(activityEvent);
     }
   }
 
   //updates heart rate and steps based on activity
-  switch (state.activity) {
+  switch (device.activity) {
     case 'idle':
-      state.heartRate = randomBetween(60, 80);
+      device.heartRate = randomBetween(60, 80);
       break;
     case 'walking':
-      state.heartRate = randomBetween(80, 100);
+      device.heartRate = randomBetween(80, 100);
       break;
     case 'running':
-      state.heartRate = randomBetween(100, 140);
+      device.heartRate = randomBetween(100, 140);
       break;
     case 'cycling':
-      state.heartRate = randomBetween(90, 120);
+      device.heartRate = randomBetween(90, 120);
       break;
   }
-  if (state.activity === 'walking' || state.activity === 'running') {
+  if (device.activity === 'walking' || device.activity === 'running') {
     const now = Date.now();
-    if (now - state.lastStepUpdate > 1000) {
-      state.steps +=
-        state.activity === 'walking'
+    if (now - device.lastStepUpdate > 1000) {
+      device.steps +=
+        device.activity === 'walking'
           ? randomBetween(1, 3)
           : randomBetween(3, 6);
-      state.lastStepUpdate = now;
+      device.lastStepUpdate = now;
     }
   }
   return events;
 }
 
-function generateEvents(state, tick) {
+function generateEvents(device, tick) {
   const now = Date.now();
   const events = [];
 
@@ -76,17 +92,18 @@ function generateEvents(state, tick) {
   events.push({
     type: 'heart_rate',
     timestamp: now,
-    value: state.heartRate,
+    value: device.heartRate,
   });
 
   // Steps event every 3 ticks or if steps have been updated
   if (tick % 3 === 0) {
     events.push({
+      deviceId: device.deviceId,
       type: 'steps',
       timestamp: now,
-      total: state.steps,
+      total: device.steps,
     });
-    state.lastStepEmit = now;
+    device.lastStepEmit = now;
   }
 
   return events;
@@ -101,7 +118,10 @@ function emitEvents(events) {
 // Simulate the state of the system
 setInterval(() => {
   tick++;
-  const stateEvents = updateState(state, tick);
-  const generatedEvents = generateEvents(state, tick);
-  emitEvents([...stateEvents, ...generatedEvents]);
+
+  devices.forEach((device) => {
+    const stateEvents = updateState(device, tick);
+    const generatedEvents = generateEvents(device, tick);
+    emitEvents([...stateEvents, ...generatedEvents]);
+  });
 }, 1000);
