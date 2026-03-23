@@ -37,6 +37,7 @@ function maybeChangeActivity(state) {
       console.log(`Activity changed from ${state.activity} to ${newActivity}`);
       state.activity = newActivity;
       return {
+        deviceId: state.deviceId,
         type: 'activity_change',
         timestamp: Date.now(),
         value: newActivity,
@@ -90,6 +91,7 @@ function generateEvents(device, tick) {
 
   // Heart rate event every tick
   events.push({
+    deviceId: device.deviceId,
     type: 'heart_rate',
     timestamp: now,
     value: device.heartRate,
