@@ -23,3 +23,35 @@ Multiple watches are used.
 [commit 4b78d080dd9d7c9a435af9b12a410200b876f643](https://github.com/dobby-ide/kafka-simulator/commit/4b78d080dd9d7c9a435af9b12a410200b876f643)
 
 <img src="assets/simulator_logs_002.png" alt="log002" width="300"/>
+
+
+----------------------
+
+
+
+This project runs Apache Kafka in KRaft mode, which means Kafka runs without ZooKeeper. The YAML file was actually found here: https://developer.confluent.io/confluent-tutorials/kafka-on-docker/
+
+-------------
+
+### Enter the Kafka container
+```docker exec -it broker bash```
+
+### Create topic
+broker:/$ ```/opt/kafka/bin/kafka-topics.sh --create \
+  --topic device-events \
+  --bootstrap-server broker:29092```
+
+### List topics
+broker:/$ ```/opt/kafka/bin/kafka-topics.sh --list \
+  --bootstrap-server localhost:9092```
+
+### Produce a message
+broker:/$ ```echo "Hello Kafka!" | /opt/kafka/bin/kafka-console-producer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic device-events```
+
+### Consume messages
+broker:/$ ```/opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic device-events \
+  --from-beginning```
