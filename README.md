@@ -55,3 +55,13 @@ broker:/$ ```/opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic device-events \
   --from-beginning```
+
+
+  ------------
+  25.3.2026
+
+  I choose to have only one topic in Kafka called device-events. And the consumer can filter by type (heart_rate, steps, activity_change etc.) Later this could be changed.
+  I have modularized simulator.js, so the new starting point is src/simulator/index.js
+
+[commit 1382bdaf355d7c014959c8e5918362f5e8d57cad](https://github.com/dobby-ide/kafka-simulator/commit/1382bdaf355d7c014959c8e5918362f5e8d57cad)
+
