@@ -65,3 +65,11 @@ broker:/$ ```/opt/kafka/bin/kafka-console-consumer.sh \
 
 [commit 1382bdaf355d7c014959c8e5918362f5e8d57cad](https://github.com/dobby-ide/kafka-simulator/commit/1382bdaf355d7c014959c8e5918362f5e8d57cad)
 
+<img src="assets/simulator_logs_003.png" alt="log003" width="300"/>
+
+
+------------------
+[commit 68c1063c3fb723e7e1e8e0df729f8089e79cea95](https://github.com/dobby-ide/kafka-simulator/commit/68c1063c3fb723e7e1e8e0df729f8089e79cea95)
+
+src/simulator/index.js and src/consumers/consumerConsole.js needs to run independently along with the Kafka container.
+
