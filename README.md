@@ -73,3 +73,10 @@ broker:/$ ```/opt/kafka/bin/kafka-console-consumer.sh \
 
 src/simulator/index.js and src/consumers/consumerConsole.js needs to run independently along with the Kafka container.
 
+
+
+27.3.2026
+
+postgresConsumer.js has the ability to fetch and store events directly in a database. The file will store an average of heart rates or steps for each device in time frame of 5 seconds to avoid the database to grow too big too fast.
+
+<img src="assets/simulator_logs_004.png" alt="log003" width="300"/>
