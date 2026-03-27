@@ -18,35 +18,87 @@ const pool = new Pool({
   database: 'smartwatch',
 });
 
+// Aggregation buffer: deviceId -> windowStart -> { heartRates, steps }
+const buffer = {};
+const WINDOW_SIZE = 5000; // 5 seconds
+
+// Calculate start of window for a given timestamp
+function getWindowStart(timestamp) {
+  return Math.floor(timestamp / WINDOW_SIZE) * WINDOW_SIZE;
+}
+
 async function run() {
   await consumer.connect();
   console.log('Kafka Consumer connected');
 
-  await consumer.subscribe({ topic: 'device-events', fromBeginning: true });
+  await consumer.subscribe({ topic: 'device-events', fromBeginning: false });
 
+  // Message processing
   await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
+    eachMessage: async ({ message }) => {
       const event = JSON.parse(message.value.toString());
+      const device = event.deviceId;
+      const windowStart = getWindowStart(event.timestamp);
 
-      // Map simulator fields to table columns
-      const value = event.value !== undefined ? event.value : event.total;
+      if (!buffer[device]) {
+        buffer[device] = {};
+      }
 
-      const query = `
-        INSERT INTO watch_event_metrics
-        (device_id, timestamp, type, value)
-        VALUES ($1, $2, $3, $4)
-      `;
+      if (!buffer[device][windowStart]) {
+        buffer[device][windowStart] = { heartRates: [], steps: 0 };
+      }
 
-      const values = [event.deviceId, event.timestamp, event.type, value];
+      // Aggregate the event
+      if (event.type === 'heart_rate') {
+        buffer[device][windowStart].heartRates.push(event.value);
+      }
 
-      try {
-        await pool.query(query, values);
-        console.log(`Inserted ${event.type} for ${event.deviceId}`);
-      } catch (err) {
-        console.error('DB insert error:', err);
+      if (event.type === 'steps') {
+        buffer[device][windowStart].steps += event.total;
       }
     },
   });
+
+  setInterval(async () => {
+    const now = Date.now();
+
+    for (const device in buffer) {
+      for (const windowStart in buffer[device]) {
+        // Only flush windows that are complete
+        if (now - windowStart < WINDOW_SIZE) continue;
+
+        const data = buffer[device][windowStart];
+
+        if (data.heartRates.length === 0 && data.steps === 0) continue;
+
+        const avgHeartRate =
+          data.heartRates.length > 0
+            ? data.heartRates.reduce((a, b) => a + b, 0) /
+              data.heartRates.length
+            : null;
+
+        const query = `
+          INSERT INTO watch_metrics_agg
+          (device_id, window_start, avg_heart_rate, total_steps)
+          VALUES ($1, $2, $3, $4)
+        `;
+        const values = [
+          device,
+          parseInt(windowStart),
+          avgHeartRate,
+          data.steps,
+        ];
+
+        try {
+          await pool.query(query, values);
+          console.log(`Inserted window ${windowStart} for ${device}`);
+        } catch (err) {
+          console.error('DB insert error:', err);
+        }
+        delete buffer[device][windowStart];
+      }
+    }
+  }, 2000);
 }
 
 run().catch(console.error);
